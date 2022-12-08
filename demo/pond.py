@@ -24,10 +24,11 @@ bp = Blueprint('pond', __name__, url_prefix='/')
 def pond():
     mgcursor = get_ponds({})
     # row_transform = lambda id, x : x, int.from_bytes(id._ObjectId__id,'little')
-    def getId(x): return {'_id': x['_id']._ObjectId__id.hex()}
-    def row_transform(x): return {**x, **getId(x)}
-    data = [extract_row(d) for d in mgcursor]
-    current_app.logger.debug(data)
+    # def getId(x): return {'_id': x['_id']._ObjectId__id.hex()}
+    getId = lambda x: {'_id': x['_id']._ObjectId__id.hex()}
+    # def row_transform(x): return {**x, **getId(x)}
+    row_transform = lambda x : {**x, **getId(x)}
+    data = [row_transform(row) for row in mgcursor]
     return data
 
 
@@ -44,10 +45,7 @@ def row_transform(x):
 def extract_row(row):
     id = row['_id']
     id_str = id._ObjectId__id.hex()
-    id_byte = id._ObjectId__id
-    id_int = int.from_bytes(id._ObjectId__id, 'little')
-    bt = str(id_int).encode()
-    row['_id'] = id_int
+    row['_id'] = id_str
     return row
 
 
