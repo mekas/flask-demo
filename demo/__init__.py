@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request
 import os
 from pymongo import *
-from db import *
+from . import db
 from . import pond 
 
 def create_app(test_config=None):
@@ -32,27 +32,5 @@ def create_app(test_config=None):
         'shape' : <string> 
     }
     '''
-    @app.post('/api/v1/register_pond')
-    def register_pond(): 
-        
-        name = request.form['name']
-        location = request.form['location']
-        material = request.form['material']
-        shape = request.form['shape']
-        pond = {
-            'name' : name,
-            'location' : location, 
-            'material' : material, 
-            'shape' : shape
-        }
-        
-        pond = request.form['pond']
-        
-        app.logger.debug("Pond name", name)
-        
-        client = MongoClient("localhost", 27017)
-        db = client.fishdb
-        db.pond.insert_one(pond)
-        return True 
         
     return app

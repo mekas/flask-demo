@@ -6,12 +6,14 @@ from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, current_app, Markup, send_from_directory
 )
 
+from datetime import datetime
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
-from db import *
+from . import db
 from bson.objectid import ObjectId
 from copy import deepcopy
 import numpy as np
+from .util import *
 
 bp = Blueprint('pond', __name__, url_prefix='/')
 '''
@@ -22,14 +24,16 @@ bp = Blueprint('pond', __name__, url_prefix='/')
 
 @bp.get("/pond")
 def pond():
-    mgcursor = get_ponds({})
-    # row_transform = lambda id, x : x, int.from_bytes(id._ObjectId__id,'little')
-    # def getId(x): return {'_id': x['_id']._ObjectId__id.hex()}
-    getId = lambda x: {'_id': x['_id']._ObjectId__id.hex()}
-    # def row_transform(x): return {**x, **getId(x)}
-    row_transform = lambda x : {**x, **getId(x)}
-    data = [row_transform(row) for row in mgcursor]
+    mgcursor = db.get_ponds({})
+    data = get_row(mgcursor)
     return data
+
+
+@bp.get("/pond/<id>")
+def pond_id(id):
+    filter = {"_id": id}
+    data = db.get_pond(filter)
+    return get_row(data)
 
 
 """ def getId(x):
@@ -42,46 +46,30 @@ def row_transform(x):
     return d """
 
 
-def extract_row(row):
-    id = row['_id']
-    id_str = id._ObjectId__id.hex()
-    row['_id'] = id_str
-    return row
-
-
-@bp.get("/pond/<id>")
-def pond_id(id):
-    filter = {"_id": id}
-    data = get_pond(filter)
-    return data
-
-
 '''
 request object will send 
 name, location, shape, material, length, width, diameter, height
 '''
 
 
-@bp.post("/pond")
+@bp.post("/pond/insert")
 def pond_insertion():
     name = request.form['name']
     shape = request.form['shape']
     material = request.form['material']
-    length = request.form['length']
-    width = request.form['width']
-    from datetime import datetime
+    length = ("", request.form.get('length'))[request.form.get('length') is not None] 
+    width = ("", request.form.get('width'))[request.form.get('width') is not None] 
+
     build_time = datetime.now()
-    isActive = False
+
     data = {
         'name': name,
         'shape': shape,
         'material': material,
         'length': length,
         'width': width,
-        'build_time': build_time,
-        'isActive': False
+        #'build_time': build_time,
+        'isActive': 'False'
     }
-    row = insert_pond(data)
-    if (row > 0):
-        return True
-    return False
+    row = db.insert_pond(data)
+    return get_row(row)

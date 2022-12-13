@@ -27,8 +27,19 @@ def get_pond(filter={}):
     
 def insert_pond(data):
     collection = get_collection("ponds")
-    row = collection.insert_one(data)
-    return row
+    current_app.logger.debug(data)
+    row = collection.insert_one(
+        
+            data, 
+            {
+                '$currentDate' : {
+                    'lastModified': 'True', 
+                    'build_time': { '$type': "timestamp"}
+                }
+            }
+        
+        )
+    return row.inserted_id
 
 def close_db(e=None):
     db = g.pop(current_app.config['DATABASE'], None)
